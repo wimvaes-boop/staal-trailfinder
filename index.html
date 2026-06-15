@@ -502,6 +502,21 @@
                 display: none !important;
             }
         }
+
+        /* Leaflet Dark Mode styling */
+        .leaflet-bar a, .leaflet-control-zoom-in, .leaflet-control-zoom-out {
+            background-color: var(--bg-card) !important;
+            color: var(--text-primary) !important;
+            border-color: var(--border-color) !important;
+        }
+        .leaflet-bar a:hover {
+            background-color: var(--border-color) !important;
+        }
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+            background-color: var(--bg-card) !important;
+            color: var(--text-primary) !important;
+            border: 1px solid var(--border-color);
+        }
     </style>
 </head>
 <body>
@@ -634,6 +649,7 @@
         let poiMarkersGroup = null;
         let userMarker = null;
         let userCircle = null;
+        let lastUserLatLng = null;
 
         // Init Kaart
         function initMap() {
@@ -646,6 +662,19 @@
             }).addTo(map);
 
             poiMarkersGroup = L.layerGroup().addTo(map);
+
+            // "Centreren op mijn locatie" knop toevoegen
+            const locationControl = L.control({ position: 'topleft' });
+            locationControl.onAdd = function(map) {
+                const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+                div.innerHTML = '<a style="cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;" title="Mijn locatie">🎯</a>';
+                div.onclick = function(e) {
+                    e.stopPropagation();
+                    zoomToUserLocation();
+                };
+                return div;
+            };
+            locationControl.addTo(map);
 
             // Geolocation
             if (navigator.geolocation) {
@@ -661,6 +690,7 @@
             const lat = e.coords.latitude;
             const lon = e.coords.longitude;
             const radius = e.coords.accuracy;
+            lastUserLatLng = [lat, lon];
 
             if (userMarker) {
                 userMarker.setLatLng([lat, lon]);
@@ -687,6 +717,17 @@
 
         function onLocationError(e) {
             console.log("Geolocatie tracking niet beschikbaar:", e.message);
+        }
+
+        function zoomToUserLocation() {
+            if (lastUserLatLng && map) {
+                map.setView(lastUserLatLng, 16);
+                if (userMarker) {
+                    userMarker.openPopup();
+                }
+            } else {
+                alert("Wachten op GPS-locatie... Zorg ervoor dat je locatievoorzieningen hebt toegestaan in Safari/Chrome.");
+            }
         }
 
         // Window Resize afhandeling

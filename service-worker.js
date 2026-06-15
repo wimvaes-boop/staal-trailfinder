@@ -1,4 +1,4 @@
-const CACHE_NAME = 'staal-trailfinder-v1';
+const CACHE_NAME = 'staal-trailfinder-v2';
 const ASSETS = [
   './index.html',
   './app.js',

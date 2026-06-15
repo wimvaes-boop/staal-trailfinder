@@ -1,156 +1,1025 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-    <title>Staal Trailfinder - POI Zoeker</title>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f6;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            align-items: center;
-            justify-content: center;
-        }
-        .container {
-            background-color: #ffffff;
-            padding: 40px;
-            border-radius: 16px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            text-align: center;
-            max-width: 480px;
-            width: 90%;
-        }
-        h1 {
-            color: #2c3e50;
-            margin-bottom: 10px;
-            font-size: 28px;
-        }
-        p {
-            color: #7f8c8d;
-            margin-bottom: 30px;
-            font-size: 15px;
-            line-height: 1.5;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .btn-select {
-            display: inline-block;
-            background-color: #3498db;
-            color: white;
-            padding: 12px 20px;
-            font-size: 15px;
-            font-weight: 600;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.2s;
-            border: 1px solid #2980b9;
-        }
-        .btn-select:hover {
-            background-color: #2980b9;
-        }
-        #file-text {
-            display: block;
-            margin-top: 10px;
-            color: #7f8c8d;
-            font-size: 14px;
-            font-style: italic;
-        }
-        .btn-submit {
-            background-color: #2ecc71;
-            color: white;
-            border: none;
-            padding: 14px 30px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            width: 100%;
-            transition: background 0.2s;
-            box-shadow: 0 3px 6px rgba(46, 204, 113, 0.2);
-            margin-top: 15px;
-        }
-        .btn-submit:hover {
-            background-color: #27ae60;
-        }
-        .error {
-            color: #e74c3c;
-            background-color: #fadbd8;
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-        .footer {
-            margin-top: auto;
-            padding: 20px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 12px;
-        }
-        .footer a {
-            color: #bdc3c7;
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-        .footer a:hover {
-            color: #95a5a6;
-        }
-    </style>
-    <link rel="manifest" href="/static/manifest.json">
-    <meta name="theme-color" content="#2c3e50">
+    <title>Staal Trailfinder - Vind POI's langs je route</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- PWA Metadata -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#0f172a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Staal Trailfinder">
+    <meta name="apple-mobile-web-app-title" content="Trailfinder">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3163/3163181.png">
 
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then(reg => console.log('Service Worker geregistreerd!', reg))
-                    .catch(err => console.log('Service Worker mislukt:', err));
-            });
+    <!-- Stylesheets & Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --bg-input: #0f172a;
+            --border-color: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --primary: #10b981;
+            --primary-hover: #059669;
+            --accent-blue: #3b82f6;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
-    </script>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 56px;
+            flex-shrink: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: var(--primary);
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 16px;
+            gap: 16px;
+            overflow: hidden;
+        }
+
+        /* Centered Cards */
+        #upload-card {
+            margin: auto;
+            width: 100%;
+            max-width: 500px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+
+        #loading-card {
+            margin: auto;
+            width: 100%;
+            max-width: 400px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 32px 24px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Upload Area */
+        .upload-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 40px 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background-color: rgba(30, 41, 59, 0.5);
+            text-align: center;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--primary);
+            background-color: rgba(16, 185, 129, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            color: var(--primary);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .upload-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .upload-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            box-shadow: none;
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--border-color);
+            transform: none;
+        }
+
+        /* Loading Spinner */
+        .loading-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .spinner {
+            width: 44px;
+            height: 44px;
+            border: 4px solid rgba(16, 185, 129, 0.1);
+            border-left-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        .progress-text {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .progress-subtext {
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-align: center;
+            max-width: 280px;
+            line-height: 1.4;
+        }
+
+        /* Dashboard */
+        .dashboard {
+            display: none; /* Shown dynamically as flex (mobile) or grid (desktop) */
+            flex: 1;
+            flex-direction: column;
+            gap: 16px;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        @media (min-width: 1024px) {
+            .dashboard {
+                display: none; /* Shown dynamically as grid */
+                grid-template-columns: 3fr 2fr;
+                grid-template-rows: auto 1fr;
+            }
+        }
+
+        .info-bar {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-shrink: 0;
+        }
+
+        .route-stats {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-val {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-lbl {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .map-container {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .results-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: 1;
+            min-height: 0;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Filter Bar */
+        .filter-bar {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            scrollbar-width: none;
+            flex-shrink: 0;
+        }
+
+        .filter-bar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .filter-chip {
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .filter-chip.active {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        /* Search input */
+        .search-box {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .search-input {
+            width: 100%;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 16px 10px 36px;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 14px;
+            pointer-events: none;
+        }
+
+        /* POI List */
+        .poi-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-right: 2px;
+        }
+
+        .poi-item {
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .poi-item:hover {
+            border-color: #475569;
+            transform: translateY(-1px);
+        }
+
+        .poi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .poi-title {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .poi-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+
+        .poi-km {
+            font-weight: 700;
+            color: var(--primary);
+            background-color: rgba(16, 185, 129, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .poi-dist {
+            color: var(--text-secondary);
+        }
+
+        .poi-address {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-cafe { background-color: rgba(245, 158, 11, 0.1); color: var(--accent-orange); }
+        .badge-restaurant { background-color: rgba(245, 158, 11, 0.1); color: var(--accent-orange); }
+        .badge-supermarket { background-color: rgba(16, 185, 129, 0.1); color: var(--primary); }
+        .badge-fuel { background-color: rgba(239, 68, 68, 0.1); color: var(--accent-red); }
+        .badge-pharmacy { background-color: rgba(59, 130, 246, 0.1); color: var(--accent-blue); }
+        .badge-default { background-color: rgba(148, 163, 184, 0.1); color: var(--text-secondary); }
+
+        /* Mobile layout toggle */
+        .mobile-toggle-container {
+            display: flex;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-card);
+            border-radius: 30px;
+            padding: 3px;
+            width: 100%;
+            max-width: 320px;
+            flex-shrink: 0;
+        }
+
+        @media (min-width: 1024px) {
+            .mobile-toggle-container {
+                display: none;
+            }
+        }
+
+        .toggle-btn {
+            flex: 1;
+            text-align: center;
+            padding: 8px 0;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 26px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+        }
+
+        .toggle-btn.active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        /* Responsive Utilities */
+        @media (max-width: 1023px) {
+            .map-container.hidden-mobile {
+                display: none !important;
+            }
+            .results-container.hidden-mobile {
+                display: none !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .desktop-only {
+                display: none !important;
+            }
+        }
+    </style>
 </head>
 <body>
 
+    <header>
+        <a href="/" class="logo">
+            🥾 Staal <span>Trailfinder</span>
+        </a>
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <span style="font-size: 11px; color: var(--text-secondary);" class="desktop-only">
+                <a href="http://www.wimvaes.be" target="_blank" style="color: var(--text-secondary); text-decoration: none; opacity: 0.8;">#another Staalvaes production</a>
+            </span>
+            <button id="btn-reset" class="btn btn-secondary hidden" onclick="resetApp()">
+                ↩ Andere route
+            </button>
+        </div>
+    </header>
+
     <div class="container">
-        <h1>🥾 Staal Trailfinder</h1>
-        <p>Vind direct alle supermarkten, cafés, restaurants, tankstations en apotheken binnen 500 meter van jouw route.</p>
-
-        {% if error %}
-            <div class="error">{{ error }}</div>
-        {% endif %}
-
-        <form action="/" method="POST" enctype="multipart/form-data">
-            <div class="form-group">
-                <label for="gpxfile" class="btn-select">📁 Selecteer GPX-bestand</label>
-                <input type="file" id="gpxfile" name="gpxfile" accept=".gpx" required onchange="updateFileName(this)" style="display: none;">
-                <span id="file-text">Nog geen bestand gekozen</span>
+        
+        <!-- Welkomst- & Uploadscherm -->
+        <div id="upload-card">
+            <div class="upload-area" id="drop-zone" onclick="document.getElementById('file-input').click()">
+                <div class="upload-icon">🚴‍♂️</div>
+                <h2 class="upload-title">Selecteer GPX-route</h2>
+                <p class="upload-subtitle">Vind winkels, cafés en tankstations langs je route</p>
+                <input type="file" id="file-input" accept=".gpx" style="display: none;" onchange="handleFileSelect(this)">
+                <button class="btn">📁 Kies GPX-bestand</button>
             </div>
-            <button type="submit" class="btn-submit">Route analyseren →</button>
-        </form>
+            <div style="margin-top: 24px; text-align: center; font-size: 11px;">
+                <a href="http://www.wimvaes.be" target="_blank" style="color: var(--text-secondary); text-decoration: none; opacity: 0.7;">#another Staalvaes production</a>
+            </div>
+        </div>
+
+        <!-- Lader -->
+        <div id="loading-card" class="loading-container">
+            <div class="spinner"></div>
+            <div class="progress-text" id="progress-main">Bestand inlezen...</div>
+            <div class="progress-subtext" id="progress-sub">We splitsen de route op om OpenStreetMap optimaal te bevragen.</div>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboard" class="dashboard">
+            
+            <!-- Route Statistieken -->
+            <div class="info-bar" style="grid-column: 1 / -1;">
+                <div class="route-stats">
+                    <div class="stat-item">
+                        <span class="stat-val" id="stat-name">Mijn Route</span>
+                        <span class="stat-lbl">Routenaam</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-val" id="stat-dist">0.0 km</span>
+                        <span class="stat-lbl">Totale afstand</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-val" id="stat-pois">0</span>
+                        <span class="stat-lbl">Gevonden POI's</span>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn" onclick="triggerGpxExport()" title="Download route met POI waypoints">
+                        💾 GPX exporteren
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobiele Toggle -->
+            <div style="grid-column: 1 / -1; display: flex; justify-content: center; width: 100%;" class="mobile-toggle-wrapper">
+                <div class="mobile-toggle-container" id="mobile-toggle">
+                    <div class="toggle-btn active" onclick="switchMobileView('map')">🗺️ Kaart</div>
+                    <div class="toggle-btn" onclick="switchMobileView('list')">📋 Lijst (<span id="pois-count-badge">0</span>)</div>
+                </div>
+            </div>
+
+            <!-- Kaart -->
+            <div class="map-container" id="map-section">
+                <div id="map"></div>
+            </div>
+
+            <!-- POI Lijst -->
+            <div class="results-container hidden-mobile" id="list-section">
+                <div class="search-box">
+                    <input type="text" class="search-input" id="search-input" placeholder="Zoek op naam of straat..." oninput="filterAndRenderList()">
+                    <span class="search-icon">🔍</span>
+                </div>
+
+                <div class="filter-bar" id="filter-bar">
+                    <div class="filter-chip active" onclick="setFilter('all', this)">Alles</div>
+                    <div class="filter-chip" onclick="setFilter('supermarket', this)">🛒 Supermarkten</div>
+                    <div class="filter-chip" onclick="setFilter('cafe,restaurant', this)">☕ Horeca</div>
+                    <div class="filter-chip" onclick="setFilter('fuel', this)">⛽ Tankstations</div>
+                    <div class="filter-chip" onclick="setFilter('pharmacy', this)">💊 Apotheken</div>
+                </div>
+
+                <div class="poi-list" id="poi-list">
+                    <!-- Dynamic Items -->
+                </div>
+                
+                <div style="padding-top: 12px; text-align: center; font-size: 10px; border-top: 1px solid var(--border-color); flex-shrink: 0;">
+                    <a href="http://www.wimvaes.be" target="_blank" style="color: var(--text-secondary); text-decoration: none; opacity: 0.6;">#another Staalvaes production</a>
+                </div>
+            </div>
+
+        </div>
+
     </div>
 
-    <div class="footer">
-        <a href="http://www.wimvaes.be" target="_blank">#another Staalvaes production</a>
-    </div>
-
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="./app.js"></script>
     <script>
-        function updateFileName(input) {
-            if (input.files && input.files.length > 0) {
-                var fileName = input.files[0].name;
-                var fileTextElement = document.getElementById('file-text');
-                fileTextElement.innerHTML = "<strong>Geselecteerd bestand:</strong> " + fileName;
-                fileTextElement.style.color = "#27ae60";
+        // PWA Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(reg => console.log('PWA Service Worker geregistreerd!'))
+                    .catch(err => console.log('Service Worker mislukt:', err));
+            });
+        }
+
+        // Globals
+        let routePoints = [];
+        let cumulativeDistances = [];
+        let allPois = [];
+        let activeFilter = 'all';
+        let routeName = 'Mijn Route';
+        let map = null;
+        let polyline = null;
+        let poiMarkersGroup = null;
+        let userMarker = null;
+        let userCircle = null;
+
+        // Init Kaart
+        function initMap() {
+            if (map) return;
+            map = L.map('map');
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(map);
+
+            poiMarkersGroup = L.layerGroup().addTo(map);
+
+            // Geolocation
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition(onLocationFound, onLocationError, {
+                    enableHighAccuracy: true,
+                    timeout: 60000,
+                    maximumAge: 0
+                });
             }
         }
-    </script>
 
+        function onLocationFound(e) {
+            const lat = e.coords.latitude;
+            const lon = e.coords.longitude;
+            const radius = e.coords.accuracy;
+
+            if (userMarker) {
+                userMarker.setLatLng([lat, lon]);
+                userCircle.setLatLng([lat, lon]);
+                userCircle.setRadius(radius);
+            } else if (map) {
+                userMarker = L.circleMarker([lat, lon], {
+                    color: '#ffffff',
+                    fillColor: '#3b82f6',
+                    fillOpacity: 1,
+                    radius: 7,
+                    weight: 2
+                }).addTo(map).bindPopup("Je bent hier");
+
+                userCircle = L.circle([lat, lon], {
+                    radius: radius,
+                    color: '#3b82f6',
+                    opacity: 0.15,
+                    fillColor: '#3b82f6',
+                    fillOpacity: 0.05
+                }).addTo(map);
+            }
+        }
+
+        function onLocationError(e) {
+            console.log("Geolocatie tracking niet beschikbaar:", e.message);
+        }
+
+        // Window Resize afhandeling
+        window.addEventListener('resize', () => {
+            adjustDashboardLayout();
+            if (map) {
+                map.invalidateSize();
+            }
+        });
+
+        function adjustDashboardLayout() {
+            const dashboard = document.getElementById('dashboard');
+            if (!dashboard) return;
+            if (routePoints && routePoints.length > 0) {
+                if (window.innerWidth >= 1024) {
+                    dashboard.style.display = 'grid';
+                } else {
+                    dashboard.style.display = 'flex';
+                }
+            } else {
+                dashboard.style.display = 'none';
+            }
+        }
+
+        // Drag and drop
+        const dropZone = document.getElementById('drop-zone');
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+            }, false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0 && files[0].name.endsWith('.gpx')) {
+                processFile(files[0]);
+            } else {
+                alert("Upload a.u.b. een geldig .gpx-bestand.");
+            }
+        });
+
+        function handleFileSelect(input) {
+            if (input.files.length > 0) {
+                processFile(input.files[0]);
+            }
+        }
+
+        // Bestand verwerken
+        function processFile(file) {
+            routeName = file.name.replace(/\.[^/.]+$/, "");
+            
+            document.getElementById('upload-card').style.display = 'none';
+            document.getElementById('loading-card').style.display = 'flex';
+            
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    updateProgress("Route inlezen...", "Coördinaten uit GPX-bestand extraheren.");
+                    const text = e.target.result;
+                    routePoints = parseGPX(text);
+                    
+                    if (routePoints.length < 2) {
+                        throw new Error("Geen geldige GPS-coördinaten gevonden in dit GPX-bestand.");
+                    }
+
+                    updateProgress("Route analyseren...", "Afstanden en kilometers berekenen.");
+                    const distResult = getCumulativeDistances(routePoints);
+                    cumulativeDistances = distResult.distances;
+                    const totalDistKm = distResult.totalDistM / 1000.0;
+
+                    updateProgress("Verbinding maken met OpenStreetMap...", "Segmenten controleren.");
+                    const boxes = getBoundingBoxes(routePoints, cumulativeDistances);
+                    const query = buildOverpassQuery(boxes);
+
+                    updateProgress("Gegevens ophalen...", `OpenStreetMap bevragen voor ${boxes.length} segmenten.`);
+                    const elements = await fetchPOIs(query);
+
+                    updateProgress("POI's filteren...", "Winkels en horeca binnen 500m selecteren.");
+                    allPois = processPOIs(elements, routePoints, cumulativeDistances);
+
+                    // Toon Dashboard
+                    document.getElementById('loading-card').style.display = 'none';
+                    adjustDashboardLayout();
+                    document.getElementById('btn-reset').classList.remove('hidden');
+                    
+                    document.getElementById('stat-name').innerText = routeName;
+                    document.getElementById('stat-dist').innerText = totalDistKm.toFixed(1) + ' km';
+                    document.getElementById('stat-pois').innerText = allPois.length;
+                    document.getElementById('pois-count-badge').innerText = allPois.length;
+
+                    // Init en render kaart
+                    initMap();
+                    
+                    const leafletLatLngs = routePoints.map(p => [p[1], p[0]]);
+                    if (polyline) map.removeLayer(polyline);
+                    polyline = L.polyline(leafletLatLngs, {color: '#10b981', weight: 5, opacity: 0.85}).addTo(map);
+
+                    // Garandeer dat de kaart correct berekend is qua grootte en zoomt naar de route
+                    setTimeout(() => {
+                        map.invalidateSize();
+                        map.fitBounds(polyline.getBounds(), { padding: [20, 20] });
+                    }, 150);
+
+                    // Render Lijst en markers
+                    filterAndRenderList();
+
+                } catch (error) {
+                    console.error(error);
+                    alert("Er is een fout opgetreden: " + error.message);
+                    resetApp();
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function updateProgress(title, subtitle) {
+            document.getElementById('progress-main').innerText = title;
+            document.getElementById('progress-sub').innerText = subtitle;
+        }
+
+        // Renderen en filteren
+        function filterAndRenderList() {
+            const searchQuery = document.getElementById('search-input').value.toLowerCase();
+            const filtered = allPois.filter(poi => {
+                let matchType = false;
+                if (activeFilter === 'all') {
+                    matchType = true;
+                } else {
+                    const activeTypes = activeFilter.split(',');
+                    matchType = activeTypes.includes(poi.type);
+                }
+
+                const matchSearch = poi.name.toLowerCase().includes(searchQuery) ||
+                                    poi.street.toLowerCase().includes(searchQuery) ||
+                                    poi.city.toLowerCase().includes(searchQuery);
+
+                return matchType && matchSearch;
+            });
+
+            document.getElementById('pois-count-badge').innerText = filtered.length;
+
+            const listContainer = document.getElementById('poi-list');
+            listContainer.innerHTML = '';
+
+            if (filtered.length === 0) {
+                listContainer.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 24px; font-size: 13px;">Geen locaties gevonden.</div>';
+            } else {
+                filtered.forEach(poi => {
+                    const item = document.createElement('div');
+                    item.className = 'poi-item';
+                    item.onclick = () => focusPoi(poi);
+
+                    let badgeClass = 'badge-default';
+                    let typeLabel = poi.type;
+                    if (poi.type === 'cafe') { badgeClass = 'badge-cafe'; typeLabel = '☕ café'; }
+                    else if (poi.type === 'restaurant') { badgeClass = 'badge-restaurant'; typeLabel = '🍴 restaurant'; }
+                    else if (poi.type === 'supermarket') { badgeClass = 'badge-supermarket'; typeLabel = '🛒 supermarkt'; }
+                    else if (poi.type === 'fuel') { badgeClass = 'badge-fuel'; typeLabel = '⛽ tankstation'; }
+                    else if (poi.type === 'pharmacy') { badgeClass = 'badge-pharmacy'; typeLabel = '💊 apotheek'; }
+
+                    const addressStr = poi.street ? `${poi.street} ${poi.housenumber}${poi.city ? ', ' + poi.city : ''}` : 'Geen adres';
+
+                    item.innerHTML = `
+                        <div class="poi-header">
+                            <span class="poi-title">${poi.name}</span>
+                            <span class="badge ${badgeClass}">${typeLabel}</span>
+                        </div>
+                        <div class="poi-address">${addressStr}</div>
+                        <div class="poi-meta">
+                            <span class="poi-km">⏱️ ${poi.distance_from_start} km</span>
+                            <span class="poi-dist">📏 ${poi.distance}m van route</span>
+                        </div>
+                    `;
+                    listContainer.appendChild(item);
+                });
+            }
+
+            // Render Markers
+            poiMarkersGroup.clearLayers();
+            filtered.forEach(poi => {
+                let typeEmoji = "📍";
+                if (poi.type === 'cafe' || poi.type === 'restaurant') typeEmoji = "☕";
+                else if (poi.type === 'supermarket') typeEmoji = "🛒";
+                else if (poi.type === 'fuel') typeEmoji = "⛽";
+                else if (poi.type === 'pharmacy') typeEmoji = "💊";
+
+                const customIcon = L.divIcon({
+                    html: `<div style="font-size: 22px; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));">${typeEmoji}</div>`,
+                    className: 'custom-poi-icon',
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
+                });
+
+                const popupContent = `
+                    <div style="font-family: var(--font-family); color: #0f172a; padding: 2px; min-width: 150px;">
+                        <strong style="font-size: 13px; display: block; margin-bottom: 2px;">${poi.name}</strong>
+                        <span style="font-size: 10px; text-transform: uppercase; font-weight: 700; color: #64748b;">${poi.type}</span>
+                        <hr style="margin: 6px 0; border: 0; border-top: 1px solid #e2e8f0;">
+                        <div style="font-size: 11px; margin-bottom: 2px;">⏱️ <strong>Kilometer:</strong> ${poi.distance_from_start} km</div>
+                        <div style="font-size: 11px; margin-bottom: 2px;">📏 <strong>Afstand:</strong> ${poi.distance} m</div>
+                        <div style="font-size: 10px; color: #64748b; font-style: italic; margin-top: 4px;">${poi.street ? poi.street + ' ' + poi.housenumber : 'Geen adres'}</div>
+                    </div>
+                `;
+
+                L.marker([poi.lat, poi.lon], {icon: customIcon})
+                    .bindPopup(popupContent)
+                    .addTo(poiMarkersGroup);
+            });
+        }
+
+        function focusPoi(poi) {
+            if (!map) return;
+            switchMobileView('map');
+            map.setView([poi.lat, poi.lon], 16);
+            poiMarkersGroup.eachLayer(layer => {
+                if (layer.getLatLng().lat === poi.lat && layer.getLatLng().lng === poi.lon) {
+                    setTimeout(() => layer.openPopup(), 100);
+                }
+            });
+        }
+
+        function setFilter(filterType, element) {
+            activeFilter = filterType;
+            const chips = document.getElementById('filter-bar').getElementsByClassName('filter-chip');
+            for (let chip of chips) {
+                chip.classList.remove('active');
+            }
+            element.classList.add('active');
+            filterAndRenderList();
+        }
+
+        function switchMobileView(view) {
+            const mapSection = document.getElementById('map-section');
+            const listSection = document.getElementById('list-section');
+            const toggleBtns = document.getElementById('mobile-toggle').getElementsByClassName('toggle-btn');
+
+            if (view === 'map') {
+                mapSection.classList.remove('hidden-mobile');
+                listSection.classList.add('hidden-mobile');
+                toggleBtns[0].classList.add('active');
+                toggleBtns[1].classList.remove('active');
+                if (map) {
+                    setTimeout(() => {
+                        map.invalidateSize();
+                    }, 50);
+                }
+            } else {
+                mapSection.classList.add('hidden-mobile');
+                listSection.classList.remove('hidden-mobile');
+                toggleBtns[0].classList.remove('active');
+                toggleBtns[1].classList.add('active');
+            }
+        }
+
+        function resetApp() {
+            routePoints = [];
+            cumulativeDistances = [];
+            allPois = [];
+            activeFilter = 'all';
+            
+            document.getElementById('file-input').value = '';
+            document.getElementById('search-input').value = '';
+            
+            const chips = document.getElementById('filter-bar').getElementsByClassName('filter-chip');
+            for (let i = 0; i < chips.length; i++) {
+                if (i === 0) chips[i].classList.add('active');
+                else chips[i].classList.remove('active');
+            }
+
+            document.getElementById('upload-card').style.display = 'block';
+            document.getElementById('loading-card').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('btn-reset').classList.add('hidden');
+
+            if (polyline && map) {
+                map.removeLayer(polyline);
+                polyline = null;
+            }
+            if (poiMarkersGroup) {
+                poiMarkersGroup.clearLayers();
+            }
+        }
+
+        function triggerGpxExport() {
+            if (routePoints.length === 0) return;
+            
+            let gpx = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+            gpx += `<gpx version="1.1" creator="Staal Trailfinder" xmlns="http://www.topografix.com/GPX/1/1">\n`;
+            gpx += `  <metadata>\n    <name>${routeName} met POIs</name>\n  </metadata>\n`;
+            
+            allPois.forEach(poi => {
+                let typeLabel = poi.type;
+                if (poi.type === 'cafe') typeLabel = 'Cafe';
+                else if (poi.type === 'restaurant') typeLabel = 'Restaurant';
+                else if (poi.type === 'supermarket') typeLabel = 'Supermarkt';
+                else if (poi.type === 'fuel') typeLabel = 'Tankstation';
+                else if (poi.type === 'pharmacy') typeLabel = 'Apotheek';
+
+                gpx += `  <wpt lat="${poi.lat.toFixed(6)}" lon="${poi.lon.toFixed(6)}">\n`;
+                gpx += `    <name>[${poi.distance_from_start}km] ${poi.name}</name>\n`;
+                gpx += `    <desc>${typeLabel} op ${poi.distance_from_start}km (${poi.distance}m van route). ${poi.street ? poi.street + ' ' + poi.housenumber : ''}</desc>\n`;
+                gpx += `    <type>${typeLabel}</type>\n`;
+                gpx += `  </wpt>\n`;
+            });
+
+            gpx += `  <trk>\n    <name>${routeName}</name>\n    <trkseg>\n`;
+            routePoints.forEach(pt => {
+                gpx += `      <trkpt lat="${pt[1].toFixed(6)}" lon="${pt[0].toFixed(6)}"></trkpt>\n`;
+            });
+            gpx += `    </trkseg>\n  </trk>\n`;
+            gpx += `</gpx>`;
+            
+            const blob = new Blob([gpx], { type: "application/gpx+xml" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${routeName}_met_pois.gpx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
     <script data-name="BMC-Widget" data-cfasync="false" src="https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js" data-id="staalvaes" data-description="Support me on Buy me a coffee!" data-message="" data-color="#5F7FFF" data-position="Right" data-x_margin="18" data-y_margin="18"></script>
 </body>
 </html>

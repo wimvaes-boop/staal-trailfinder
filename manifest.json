@@ -1,0 +1,18 @@
+{
+  "name": "Staal Trailfinder",
+  "short_name": "Trailfinder",
+  "description": "Vind winkels, cafés en tankstations langs je GPX-route.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3163/3163181.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

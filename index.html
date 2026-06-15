@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <title>Staal Trailfinder - POI Zoeker</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            text-align: center;
+            max-width: 480px;
+            width: 90%;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        p {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .btn-select {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            padding: 12px 20px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border: 1px solid #2980b9;
+        }
+        .btn-select:hover {
+            background-color: #2980b9;
+        }
+        #file-text {
+            display: block;
+            margin-top: 10px;
+            color: #7f8c8d;
+            font-size: 14px;
+            font-style: italic;
+        }
+        .btn-submit {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s;
+            box-shadow: 0 3px 6px rgba(46, 204, 113, 0.2);
+            margin-top: 15px;
+        }
+        .btn-submit:hover {
+            background-color: #27ae60;
+        }
+        .error {
+            color: #e74c3c;
+            background-color: #fadbd8;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .footer {
+            margin-top: auto;
+            padding: 20px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+        }
+        .footer a {
+            color: #bdc3c7;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .footer a:hover {
+            color: #95a5a6;
+        }
+    </style>
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Staal Trailfinder">
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(reg => console.log('Service Worker geregistreerd!', reg))
+                    .catch(err => console.log('Service Worker mislukt:', err));
+            });
+        }
+    </script>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🥾 Staal Trailfinder</h1>
+        <p>Vind direct alle supermarkten, cafés, restaurants, tankstations en apotheken binnen 500 meter van jouw route.</p>
+
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+
+        <form action="/" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="gpxfile" class="btn-select">📁 Selecteer GPX-bestand</label>
+                <input type="file" id="gpxfile" name="gpxfile" accept=".gpx" required onchange="updateFileName(this)" style="display: none;">
+                <span id="file-text">Nog geen bestand gekozen</span>
+            </div>
+            <button type="submit" class="btn-submit">Route analyseren →</button>
+        </form>
+    </div>
+
+    <div class="footer">
+        <a href="http://www.wimvaes.be" target="_blank">#another Staalvaes production</a>
+    </div>
+
+    <script>
+        function updateFileName(input) {
+            if (input.files && input.files.length > 0) {
+                var fileName = input.files[0].name;
+                var fileTextElement = document.getElementById('file-text');
+                fileTextElement.innerHTML = "<strong>Geselecteerd bestand:</strong> " + fileName;
+                fileTextElement.style.color = "#27ae60";
+            }
+        }
+    </script>
+
+    <script data-name="BMC-Widget" data-cfasync="false" src="https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js" data-id="staalvaes" data-description="Support me on Buy me a coffee!" data-message="" data-color="#5F7FFF" data-position="Right" data-x_margin="18" data-y_margin="18"></script>
+</body>
+</html>

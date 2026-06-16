@@ -1,8 +1,9 @@
-const CACHE_NAME = 'staal-trailfinder-v4';
+const CACHE_NAME = 'staal-trailfinder-v5';
 const ASSETS = [
   './index.html',
   './app.js',
   './manifest.json',
+  './icon.png',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
 ];

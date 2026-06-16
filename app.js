@@ -147,10 +147,10 @@ function buildOverpassQuery(boxes) {
     boxes.forEach(box => {
         // Formaat: minLat, minLon, maxLat, maxLon
         const boxStr = `${box[0].toFixed(6)},${box[1].toFixed(6)},${box[2].toFixed(6)},${box[3].toFixed(6)}`;
-        query += `  node["amenity"~"cafe|restaurant|pharmacy|fuel"](${boxStr});\n`;
-        query += `  node["shop"="supermarket"](${boxStr});\n`;
-        query += `  way["amenity"~"cafe|restaurant|pharmacy|fuel"](${boxStr});\n`;
-        query += `  way["shop"="supermarket"](${boxStr});\n`;
+        query += `  node["amenity"~"cafe|restaurant|pharmacy|fuel|fast_food"](${boxStr});\n`;
+        query += `  node["shop"~"supermarket|convenience|bakery|bicycle"](${boxStr});\n`;
+        query += `  way["amenity"~"cafe|restaurant|pharmacy|fuel|fast_food"](${boxStr});\n`;
+        query += `  way["shop"~"supermarket|convenience|bakery|bicycle"](${boxStr});\n`;
     });
     query += `);\nout center;`;
     return query;
@@ -242,6 +242,6 @@ function processPOIs(elements, points, cumulativeDistancesKm) {
     // Sorteer op kilometerstand vanaf de start
     filteredPois.sort((a, b) => a.distance_from_start - b.distance_from_start);
 
-    // Beperk tot maximaal 300 POI's om mobiele browsers soepel te houden
-    return filteredPois.slice(0, 300);
+    // Beperk tot maximaal 1000 POI's om mobiele browsers soepel te houden (prestaties blijven uitstekend)
+    return filteredPois.slice(0, 1000);
 }

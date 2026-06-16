@@ -450,6 +450,7 @@
         .badge-supermarket { background-color: rgba(16, 185, 129, 0.1); color: var(--primary); }
         .badge-fuel { background-color: rgba(239, 68, 68, 0.1); color: var(--accent-red); }
         .badge-pharmacy { background-color: rgba(59, 130, 246, 0.1); color: var(--accent-blue); }
+        .badge-bicycle { background-color: rgba(14, 165, 233, 0.1); color: #0ea5e9; }
         .badge-default { background-color: rgba(148, 163, 184, 0.1); color: var(--text-secondary); }
 
         /* Mobile layout toggle */
@@ -606,10 +607,11 @@
 
                 <div class="filter-bar" id="filter-bar">
                     <div class="filter-chip active" onclick="setFilter('all', this)">Alles</div>
-                    <div class="filter-chip" onclick="setFilter('supermarket', this)">🛒 Supermarkten</div>
-                    <div class="filter-chip" onclick="setFilter('cafe,restaurant', this)">☕ Horeca</div>
+                    <div class="filter-chip" onclick="setFilter('supermarket,convenience,bakery', this)">🛒 Voeding/Bakker</div>
+                    <div class="filter-chip" onclick="setFilter('cafe,restaurant,fast_food', this)">☕ Horeca/Snack</div>
                     <div class="filter-chip" onclick="setFilter('fuel', this)">⛽ Tankstations</div>
                     <div class="filter-chip" onclick="setFilter('pharmacy', this)">💊 Apotheken</div>
+                    <div class="filter-chip" onclick="setFilter('bicycle', this)">🚲 Fietsenmakers</div>
                 </div>
 
                 <div class="poi-list" id="poi-list">
@@ -894,9 +896,13 @@
                     let typeLabel = poi.type;
                     if (poi.type === 'cafe') { badgeClass = 'badge-cafe'; typeLabel = '☕ café'; }
                     else if (poi.type === 'restaurant') { badgeClass = 'badge-restaurant'; typeLabel = '🍴 restaurant'; }
+                    else if (poi.type === 'fast_food') { badgeClass = 'badge-restaurant'; typeLabel = '🍔 fastfood'; }
                     else if (poi.type === 'supermarket') { badgeClass = 'badge-supermarket'; typeLabel = '🛒 supermarkt'; }
+                    else if (poi.type === 'convenience') { badgeClass = 'badge-supermarket'; typeLabel = '🏪 buurtwinkel'; }
+                    else if (poi.type === 'bakery') { badgeClass = 'badge-supermarket'; typeLabel = '🥖 bakker'; }
                     else if (poi.type === 'fuel') { badgeClass = 'badge-fuel'; typeLabel = '⛽ tankstation'; }
                     else if (poi.type === 'pharmacy') { badgeClass = 'badge-pharmacy'; typeLabel = '💊 apotheek'; }
+                    else if (poi.type === 'bicycle') { badgeClass = 'badge-bicycle'; typeLabel = '🚲 fietsenmaker'; }
 
                     const addressStr = poi.street ? `${poi.street} ${poi.housenumber}${poi.city ? ', ' + poi.city : ''}` : 'Geen adres';
 
@@ -920,9 +926,13 @@
             filtered.forEach(poi => {
                 let typeEmoji = "📍";
                 if (poi.type === 'cafe' || poi.type === 'restaurant') typeEmoji = "☕";
+                else if (poi.type === 'fast_food') typeEmoji = "🍔";
                 else if (poi.type === 'supermarket') typeEmoji = "🛒";
+                else if (poi.type === 'convenience') typeEmoji = "🏪";
+                else if (poi.type === 'bakery') typeEmoji = "🥖";
                 else if (poi.type === 'fuel') typeEmoji = "⛽";
                 else if (poi.type === 'pharmacy') typeEmoji = "💊";
+                else if (poi.type === 'bicycle') typeEmoji = "🚲";
 
                 const customIcon = L.divIcon({
                     html: `<div style="font-size: 22px; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));">${typeEmoji}</div>`,
@@ -1032,9 +1042,13 @@
                 let typeLabel = poi.type;
                 if (poi.type === 'cafe') typeLabel = 'Cafe';
                 else if (poi.type === 'restaurant') typeLabel = 'Restaurant';
+                else if (poi.type === 'fast_food') typeLabel = 'Fastfood';
                 else if (poi.type === 'supermarket') typeLabel = 'Supermarkt';
+                else if (poi.type === 'convenience') typeLabel = 'Buurtwinkel';
+                else if (poi.type === 'bakery') typeLabel = 'Bakkerij';
                 else if (poi.type === 'fuel') typeLabel = 'Tankstation';
                 else if (poi.type === 'pharmacy') typeLabel = 'Apotheek';
+                else if (poi.type === 'bicycle') typeLabel = 'Fietsenmaker';
 
                 gpx += `  <wpt lat="${poi.lat.toFixed(6)}" lon="${poi.lon.toFixed(6)}">\n`;
                 gpx += `    <name>[${poi.distance_from_start}km] ${poi.name}</name>\n`;
